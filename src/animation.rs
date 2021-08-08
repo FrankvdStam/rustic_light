@@ -51,21 +51,21 @@ fn map_graph_color(mut position: u32, offset: u32) -> u8
     return 0;
 }
 
-fn get_color_from_graph(mut millis: u128) -> Color
+fn get_color_from_graph(position: u128) -> Color
 {
-    //scale
-    millis = millis / 100;
-
     return Color::new(
-        map_graph_color(millis as u32, R_OFFSET),
-        map_graph_color(millis as u32, G_OFFSET),
-        map_graph_color(millis as u32, B_OFFSET)
+        map_graph_color(position as u32, R_OFFSET),
+        map_graph_color(position as u32, G_OFFSET),
+        map_graph_color(position as u32, B_OFFSET)
     );
 }
 
 
-pub fn color_spectrum(rgb_devices: &mut Vec<Box<dyn RgbDevice>>, millis: u128)
+pub fn color_spectrum(rgb_devices: &mut Vec<Box<dyn RgbDevice>>, mut millis: u128)
 {
+    //scale
+    millis = millis / 100;
+
     let color = get_color_from_graph(millis);
 
     //write data to all devices before displaying
