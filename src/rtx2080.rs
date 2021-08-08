@@ -2,7 +2,7 @@ use nvapi::sys::handles::NvPhysicalGpuHandle;
 use nvapi::sys::i2c::NV_I2C_INFO_V3;
 use nvapi::sys::nvapi_QueryInterface;
 use nvapi::Status;
-use crate::color::{Color, RgbMode, RgbSpeed, RgbDevice};
+use crate::color::{Color, RgbMode, RgbSpeed, RgbDevice, RgbBrightness};
 
 
 //================================================================================================================================================================================================
@@ -49,6 +49,7 @@ pub struct Rtx2080
 {
     name                : String,
     nvapi_ic2_write_ex  : FnNvapiIc2WriteExType,
+    #[allow(dead_code)]
     nvapi_ic2_read_ex   : FnNvapiIc2ReadExType,
     handle              : NvPhysicalGpuHandle,
 
@@ -134,12 +135,14 @@ impl RgbDevice for Rtx2080
         self.speed = speed;
     }
 
+    fn set_brightness(&mut self, _brightness: RgbBrightness) { /* rtx 2080 does not seem to support brightness */ }
+
     fn get_name(&self) -> &String
     {
         return &self.name;
     }
 
-    fn display(&self)
+    fn display(&mut self)
     {
         //Write the color
         let mut data_buffer =

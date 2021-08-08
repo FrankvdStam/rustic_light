@@ -1,203 +1,217 @@
 extern crate hidapi;
 use hidapi::{HidDevice, HidApi};
-use crate::color::{Color, RgbMode, RgbSpeed, RgbDevice};
+use crate::color::{Color, RgbMode, RgbSpeed, RgbDevice, RgbBrightness};
 use std::cell::RefCell;
+use std::rc::Rc;
 
-pub struct Z390<'a>
+
+pub fn get_z390_rgb_devices() -> Vec<Box<dyn RgbDevice>>
 {
-    device: HidDevice,
-    data_packet: RefCell<DataPacket>,
-    rgb_devices: Vec<Z390RgbDevice<'a>>,
-}
+    let mut result: Vec<Box<dyn RgbDevice>> = Vec::new();
 
-impl<'a> Z390<'a>
-{
-    fn get_z390_rgb_devices(device: &'a HidDevice, data_packet: &'a RefCell<DataPacket>) -> Vec<Box<dyn RgbDevice>>
-    {
-        let mut result: Vec<Box<dyn RgbDevice>> = Vec::new();
+    //Shared mutable state
+    let data_packet = Rc::new(RefCell::new(Z390::new()));
 
-        result.push(Box::new(Z390RgbDevice::new(device, "".to_string(), data_packet)));
-
-        return result;
-    }
-
-
-
-    pub fn new() -> Self
-    {
-        let device = find_hid_device(MSI_VENDOR_ID, MPG_Z390_GAMING_PRO_CARBON);
-        let data_packet = RefCell::new(DataPacket::new());
-
+    result.push(Box::new(Z390RgbDevice::new("JRgb1"             .to_string(), ZoneIndex::JRgb1             , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("JRainbow1"         .to_string(), ZoneIndex::JRainbow1         , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("JCorsair1"         .to_string(), ZoneIndex::JCorsair1         , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("JCorsairOuterll120".to_string(), ZoneIndex::JCorsairOuterll120, data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed"        .to_string(), ZoneIndex::OnBoardLed        , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed1"       .to_string(), ZoneIndex::OnBoardLed1       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed2"       .to_string(), ZoneIndex::OnBoardLed2       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed3"       .to_string(), ZoneIndex::OnBoardLed3       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed4"       .to_string(), ZoneIndex::OnBoardLed4       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed5"       .to_string(), ZoneIndex::OnBoardLed5       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed6"       .to_string(), ZoneIndex::OnBoardLed6       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed7"       .to_string(), ZoneIndex::OnBoardLed7       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed8"       .to_string(), ZoneIndex::OnBoardLed8       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed9"       .to_string(), ZoneIndex::OnBoardLed9       , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("OnBoardLed10"      .to_string(), ZoneIndex::OnBoardLed10      , data_packet.clone())));
+    result.push(Box::new(Z390RgbDevice::new("JRgb2"             .to_string(), ZoneIndex::JRgb2             , data_packet.clone())));
 
 
 
-        let mut rgb_devices = Vec::new();
-
-
-        let z390 = Z390
-        {
-            device,
-            data_packet: data_packet,
-            rgb_devices
-        };
-
-
-        //rgb_devices.push(Z390RgbDevice::new(&device, "".to_string(), &data_packet));
-
-        return z390;
-    }
-
-    //pub fn get_rgb_devices(&self) -> Vec<Box<dyn RgbDevice>>
-    //{
-    //    let mut result: Vec<Box<dyn RgbDevice>> = Vec::new();
-//
-    //    result.push(Box::new(Z390RgbDevice::new(&self.device, "".to_string(), &self.data_packet)));
-//
-    //    return result;
-    //}
+    return result;
 }
 
 
 
-struct Z390RgbDevice<'a>
+
+
+struct Z390RgbDevice
 {
     name                : String,
-    device              : &'a HidDevice,
-    data_packet         : &'a RefCell<DataPacket>,
+    zone_index          : ZoneIndex,
+    z390: Rc<RefCell<Z390>>,
 
+    data_writen         : bool,
     color               : Color,
     mode                : RgbMode,
     speed               : RgbSpeed,
+    brightness          : RgbBrightness,
 }
 
-impl<'a> Z390RgbDevice<'a>
+impl Z390RgbDevice
 {
-    pub fn new(device: &'a HidDevice, name: String, data_packet: &'a RefCell<DataPacket>) -> Self
+    pub fn new(name: String, zone_index: ZoneIndex, data_packet: Rc<RefCell<Z390>>) -> Self
     {
         Z390RgbDevice
         {
             name,
-            device,
-            data_packet,
+            zone_index,
+            z390: data_packet,
 
+            data_writen: false,
             color: Color::new(0,0,0),
             mode: RgbMode::Static,
             speed: RgbSpeed::Slow,
+            brightness: RgbBrightness::Level100,
         }
     }
 }
 
-impl<'a> RgbDevice for Z390RgbDevice<'a>
+
+impl RgbDevice for Z390RgbDevice
 {
-    fn set_color(&mut self, color: Color) {
-        todo!()
-    }
-
-    fn set_mode(&mut self, mode: RgbMode) {
-        todo!()
-    }
-
-    fn set_speed(&mut self, speed: RgbSpeed) {
-        todo!()
-    }
-
-    fn get_name(&self) -> &String {
-        todo!()
-    }
-
-    fn display(&self) {
-        todo!()
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-pub struct Motherboard
-{
-    device: HidDevice,
-}
-
-impl Motherboard
-{
-    pub fn new() -> Motherboard
+    fn set_color(&mut self, color: Color)
     {
-        let device = find_hid_device(MSI_VENDOR_ID, MPG_Z390_GAMING_PRO_CARBON);
+        self.data_writen = true;
+        self.color = color;
 
-        Motherboard
+        match self.z390.try_borrow_mut()
         {
-            device,
+            Ok(mut z390) =>
+            {
+                let zone_data = z390.borrow_zone_data_indexed(self.zone_index);
+                zone_data.color  = self.color;
+                zone_data.color2 = self.color;
+            }
+            _ => {}
         }
     }
 
-    pub fn set_color(&self, color: Color)
+    fn set_mode(&mut self, mode: RgbMode)
     {
-        let mut zone_data = ZoneData::new();
+        self.data_writen = true;
+        self.mode = mode;
 
-        //zone_data.effect = MsiMode::Static as u8;
-        zone_data.effect = MsiMode::Static as u8;
-        zone_data.color = color;
-        zone_data.speed_and_brightness_flags = ((MsiBrightness::Level100 as u8) << 2 ) | ((MsiSpeed::Low as u8) & 0x03);
-        zone_data.color2 = color;
-        zone_data.color_flags = 0;
-        zone_data.padding = 0;
+        match self.z390.try_borrow_mut()
+        {
+            Ok(mut z390) =>
+                {
+                    let zone_data = z390.borrow_zone_data_indexed(self.zone_index);
+
+                    let msi_mode = match self.mode
+                    {
+                        RgbMode::Static => MsiMode::Static,
+                    };
+                    zone_data.effect = msi_mode as u8;
+                }
+            _ => {}
+        }
+    }
+
+    fn set_speed(&mut self, speed: RgbSpeed)
+    {
+        self.data_writen = true;
+        self.speed = speed;
 
 
-        let mut data_packet = DataPacket::new();
-        data_packet.set_all(zone_data);
-        let buffer = data_packet.to_bytes();
-        //println!("{:?}", buffer);
+        match self.z390.try_borrow_mut()
+        {
+            Ok(mut z390) =>
+                {
+                    let zone_data = z390.borrow_zone_data_indexed(self.zone_index);
 
-        self.device.send_feature_report(&buffer);
+                    let msi_speed = match self.speed
+                    {
+                        RgbSpeed::Slow   => MsiSpeed::Low,
+                        RgbSpeed::Medium => MsiSpeed::Medium,
+                        RgbSpeed::Fast   => MsiSpeed::High,
+                    };
+
+                    let msi_brightness = match self.brightness
+                    {
+                        RgbBrightness::Level10  => MsiBrightness::Level10 ,
+                        RgbBrightness::Level20  => MsiBrightness::Level20 ,
+                        RgbBrightness::Level30  => MsiBrightness::Level30 ,
+                        RgbBrightness::Level40  => MsiBrightness::Level40 ,
+                        RgbBrightness::Level50  => MsiBrightness::Level50 ,
+                        RgbBrightness::Level60  => MsiBrightness::Level60 ,
+                        RgbBrightness::Level70  => MsiBrightness::Level70 ,
+                        RgbBrightness::Level80  => MsiBrightness::Level80 ,
+                        RgbBrightness::Level90  => MsiBrightness::Level90 ,
+                        RgbBrightness::Level100 => MsiBrightness::Level100,
+                    };
+
+                    zone_data.speed_and_brightness_flags =  ((msi_brightness as u8) << 2 ) | ((msi_speed as u8) & 0x03);
+                }
+            _ => {}
+        }
+    }
+
+    fn set_brightness(&mut self, brightness: RgbBrightness)
+    {
+        self.data_writen = true;
+        self.brightness = brightness;
+
+        match self.z390.try_borrow_mut()
+        {
+            Ok(mut z390) =>
+                {
+                    let zone_data = z390.borrow_zone_data_indexed(self.zone_index);
+
+                    let msi_speed = match self.speed
+                    {
+                        RgbSpeed::Slow   => MsiSpeed::Low,
+                        RgbSpeed::Medium => MsiSpeed::Medium,
+                        RgbSpeed::Fast   => MsiSpeed::High,
+                    };
+
+                    let msi_brightness = match self.brightness
+                    {
+                        RgbBrightness::Level10  => MsiBrightness::Level10 ,
+                        RgbBrightness::Level20  => MsiBrightness::Level20 ,
+                        RgbBrightness::Level30  => MsiBrightness::Level30 ,
+                        RgbBrightness::Level40  => MsiBrightness::Level40 ,
+                        RgbBrightness::Level50  => MsiBrightness::Level50 ,
+                        RgbBrightness::Level60  => MsiBrightness::Level60 ,
+                        RgbBrightness::Level70  => MsiBrightness::Level70 ,
+                        RgbBrightness::Level80  => MsiBrightness::Level80 ,
+                        RgbBrightness::Level90  => MsiBrightness::Level90 ,
+                        RgbBrightness::Level100 => MsiBrightness::Level100,
+                    };
+
+                    zone_data.speed_and_brightness_flags =  ((msi_brightness as u8) << 2 ) | ((msi_speed as u8) & 0x03);
+                }
+            _ => {}
+        }
+    }
+
+    fn get_name(&self) -> &String
+    {
+        return &self.name;
+    }
+
+    fn display(&mut self)
+    {
+        if self.data_writen
+        {
+            match self.z390.try_borrow_mut()
+            {
+                Ok(z390) =>
+                {
+                    z390.write_to_device();
+                }
+                Err(_) => {}
+            }
+
+        }
+        self.data_writen = false;
     }
 }
+
+
 
 
 ///Find a hid device matching vendor and product ID
@@ -296,7 +310,7 @@ impl ZoneData
         {
             effect: MsiMode::Static as u8,
             color: Color::new(0,0,0),
-            speed_and_brightness_flags: 0,
+            speed_and_brightness_flags: ((MsiBrightness::Level100 as u8) << 2 ) | ((MsiSpeed::Low as u8) & 0x03),
             color2: Color::new(0,0,0),
             color_flags: 0,
             padding: 0,
@@ -308,7 +322,7 @@ impl ZoneData
 
 #[allow(dead_code)]
 #[repr(C)]
-struct DataPacket
+struct Z390
 {
     report_id            : u8,                      // Report ID
     j_rgb_1              : ZoneData,                // 1
@@ -328,6 +342,8 @@ struct DataPacket
     on_board_led_10      : ZoneData,                // 141
     j_rgb_2              : ZoneData,                // 151
     save_data            : u8,                      // 161
+
+    device               : HidDevice,
 }
 
 
@@ -355,11 +371,13 @@ enum ZoneIndex
 
 
 
-impl DataPacket
+impl Z390
 {
     pub fn new() -> Self
     {
-        DataPacket
+        let device = find_hid_device(MSI_VENDOR_ID, MPG_Z390_GAMING_PRO_CARBON);
+
+        Z390
         {
             report_id           : 0x52,
             j_rgb_1             : ZoneData::new(),
@@ -379,11 +397,60 @@ impl DataPacket
             on_board_led_10     : ZoneData::new(),
             j_rgb_2             : ZoneData::new(),
             save_data           : 0,
+
+            device,
         }
     }
 
+    pub fn borrow_zone_data_indexed(&mut self, zone_index: ZoneIndex) -> &mut ZoneData
+    {
+        match zone_index
+        {
+            ZoneIndex::JRgb1                => &mut self.j_rgb_1             ,
+            ZoneIndex::JRainbow1            => &mut self.j_rainbow_1         ,
+            ZoneIndex::JCorsair1            => &mut self.j_corsair_1         ,
+            ZoneIndex::JCorsairOuterll120   => &mut self.j_corsair_outerll120,
+            ZoneIndex::OnBoardLed           => &mut self.on_board_led        ,
+            ZoneIndex::OnBoardLed1          => &mut self.on_board_led_1      ,
+            ZoneIndex::OnBoardLed2          => &mut self.on_board_led_2      ,
+            ZoneIndex::OnBoardLed3          => &mut self.on_board_led_3      ,
+            ZoneIndex::OnBoardLed4          => &mut self.on_board_led_4      ,
+            ZoneIndex::OnBoardLed5          => &mut self.on_board_led_5      ,
+            ZoneIndex::OnBoardLed6          => &mut self.on_board_led_6      ,
+            ZoneIndex::OnBoardLed7          => &mut self.on_board_led_7      ,
+            ZoneIndex::OnBoardLed8          => &mut self.on_board_led_8      ,
+            ZoneIndex::OnBoardLed9          => &mut self.on_board_led_9      ,
+            ZoneIndex::OnBoardLed10         => &mut self.on_board_led_10     ,
+            ZoneIndex::JRgb2                => &mut self.j_rgb_2             ,
+        }
+    }
 
-    pub fn set_all(&mut self, zone_data: ZoneData)
+    #[allow(dead_code)]
+    pub fn write_zone_data_indexed(&mut self, zone_index: ZoneIndex, zone_data: ZoneData)
+    {
+        match zone_index
+        {
+            ZoneIndex::JRgb1                => self.j_rgb_1               = zone_data,
+            ZoneIndex::JRainbow1            => self.j_rainbow_1           = zone_data,
+            ZoneIndex::JCorsair1            => self.j_corsair_1           = zone_data,
+            ZoneIndex::JCorsairOuterll120   => self.j_corsair_outerll120  = zone_data,
+            ZoneIndex::OnBoardLed           => self.on_board_led          = zone_data,
+            ZoneIndex::OnBoardLed1          => self.on_board_led_1        = zone_data,
+            ZoneIndex::OnBoardLed2          => self.on_board_led_2        = zone_data,
+            ZoneIndex::OnBoardLed3          => self.on_board_led_3        = zone_data,
+            ZoneIndex::OnBoardLed4          => self.on_board_led_4        = zone_data,
+            ZoneIndex::OnBoardLed5          => self.on_board_led_5        = zone_data,
+            ZoneIndex::OnBoardLed6          => self.on_board_led_6        = zone_data,
+            ZoneIndex::OnBoardLed7          => self.on_board_led_7        = zone_data,
+            ZoneIndex::OnBoardLed8          => self.on_board_led_8        = zone_data,
+            ZoneIndex::OnBoardLed9          => self.on_board_led_9        = zone_data,
+            ZoneIndex::OnBoardLed10         => self.on_board_led_10       = zone_data,
+            ZoneIndex::JRgb2                => self.j_rgb_2               = zone_data,
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn write_zone_data_all(&mut self, zone_data: ZoneData)
     {
         self.j_rgb_1              = zone_data;
         self.j_rainbow_1          = zone_data;
@@ -403,68 +470,35 @@ impl DataPacket
         self.j_rgb_2              = zone_data;
     }
 
-
-    pub fn set_color(&mut self, color: Color)
+    #[allow(dead_code)]
+    pub fn write_to_device(&self)
     {
-        self.j_rgb_1                .color = color;
-        self.j_rainbow_1            .color = color;
-        self.j_corsair_1            .color = color;
-        self.j_corsair_outerll120   .color = color;
-        self.on_board_led           .color = color;
-        self.on_board_led_1         .color = color;
-        self.on_board_led_2         .color = color;
-        self.on_board_led_3         .color = color;
-        self.on_board_led_4         .color = color;
-        self.on_board_led_5         .color = color;
-        self.on_board_led_6         .color = color;
-        self.on_board_led_7         .color = color;
-        self.on_board_led_8         .color = color;
-        self.on_board_led_9         .color = color;
-        self.on_board_led_10        .color = color;
-        self.j_rgb_2                .color = color;
+        let buffer = self.to_bytes();
+        self.device.send_feature_report(&buffer).unwrap();
     }
 
-    pub fn set_color2(&mut self, color: Color)
-    {
-        self.j_rgb_1.color2               = color;
-        self.j_rainbow_1.color2           = color;
-        self.j_corsair_1.color2           = color;
-        self.j_corsair_outerll120.color2  = color;
-        self.on_board_led.color2          = color;
-        self.on_board_led_1.color2        = color;
-        self.on_board_led_2.color2        = color;
-        self.on_board_led_3.color2        = color;
-        self.on_board_led_4.color2        = color;
-        self.on_board_led_5.color2        = color;
-        self.on_board_led_6.color2        = color;
-        self.on_board_led_7.color2        = color;
-        self.on_board_led_8.color2        = color;
-        self.on_board_led_9.color2        = color;
-        self.on_board_led_10.color2       = color;
-        self.j_rgb_2.color2               = color;
-    }
 
-    pub fn to_bytes(&self) -> [u8; 162]
+    fn to_bytes(&self) -> [u8; 162]
     {
         let mut buffer: [u8; 162] = [0; 162];
 
         buffer[0] = self.report_id;
-        DataPacket::write_zone_data(&self.j_rgb_1, ZoneIndex::JRgb1, &mut buffer);
-        DataPacket::write_zone_data(&self.j_rainbow_1, ZoneIndex::JRainbow1, &mut buffer);
-        DataPacket::write_zone_data(&self.j_corsair_1, ZoneIndex::JCorsair1, &mut buffer);
-        DataPacket::write_zone_data(&self.j_corsair_outerll120, ZoneIndex::JCorsairOuterll120, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led, ZoneIndex::OnBoardLed, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_1, ZoneIndex::OnBoardLed1, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_2, ZoneIndex::OnBoardLed2, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_3, ZoneIndex::OnBoardLed3, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_4, ZoneIndex::OnBoardLed4, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_5, ZoneIndex::OnBoardLed5, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_6, ZoneIndex::OnBoardLed6, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_7, ZoneIndex::OnBoardLed7, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_8, ZoneIndex::OnBoardLed8, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_9, ZoneIndex::OnBoardLed9, &mut buffer);
-        DataPacket::write_zone_data(&self.on_board_led_10, ZoneIndex::OnBoardLed10, &mut buffer);
-        DataPacket::write_zone_data(&self.j_rgb_2, ZoneIndex::JRgb2, &mut buffer);
+        Z390::write_zone_data(&self.j_rgb_1, ZoneIndex::JRgb1, &mut buffer);
+        Z390::write_zone_data(&self.j_rainbow_1, ZoneIndex::JRainbow1, &mut buffer);
+        Z390::write_zone_data(&self.j_corsair_1, ZoneIndex::JCorsair1, &mut buffer);
+        Z390::write_zone_data(&self.j_corsair_outerll120, ZoneIndex::JCorsairOuterll120, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led, ZoneIndex::OnBoardLed, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_1, ZoneIndex::OnBoardLed1, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_2, ZoneIndex::OnBoardLed2, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_3, ZoneIndex::OnBoardLed3, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_4, ZoneIndex::OnBoardLed4, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_5, ZoneIndex::OnBoardLed5, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_6, ZoneIndex::OnBoardLed6, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_7, ZoneIndex::OnBoardLed7, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_8, ZoneIndex::OnBoardLed8, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_9, ZoneIndex::OnBoardLed9, &mut buffer);
+        Z390::write_zone_data(&self.on_board_led_10, ZoneIndex::OnBoardLed10, &mut buffer);
+        Z390::write_zone_data(&self.j_rgb_2, ZoneIndex::JRgb2, &mut buffer);
         buffer[161] = self.save_data;
 
         return buffer;

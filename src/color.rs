@@ -5,11 +5,27 @@ pub trait RgbDevice
     fn set_color(&mut self, color: Color);
     fn set_mode(&mut self, mode: RgbMode);
     fn set_speed(&mut self, speed: RgbSpeed);
+    fn set_brightness(&mut self, brightness: RgbBrightness);
     fn get_name(&self) -> &String;
-    fn display(&self);
+    fn display(&mut self);
 }
 
 
+
+#[allow(dead_code)]
+pub enum RgbBrightness
+{
+    Level10,
+    Level20,
+    Level30,
+    Level40,
+    Level50,
+    Level60,
+    Level70,
+    Level80,
+    Level90,
+    Level100,
+}
 
 #[allow(dead_code)]
 pub enum RgbSpeed
