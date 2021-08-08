@@ -1,9 +1,164 @@
 extern crate hidapi;
 use hidapi::{HidDevice, HidApi};
-use crate::color::Color;
+use crate::color::{Color, RgbMode, RgbSpeed, RgbDevice};
+use std::cell::RefCell;
 
-const MSI_VENDOR_ID: u16 = 0x1462;
-const MPG_Z390_GAMING_PRO_CARBON: u16 = 0x7b17;
+pub struct Z390<'a>
+{
+    device: HidDevice,
+    data_packet: RefCell<DataPacket>,
+    rgb_devices: Vec<Z390RgbDevice<'a>>,
+}
+
+impl<'a> Z390<'a>
+{
+    fn get_z390_rgb_devices(device: &'a HidDevice, data_packet: &'a RefCell<DataPacket>) -> Vec<Box<dyn RgbDevice>>
+    {
+        let mut result: Vec<Box<dyn RgbDevice>> = Vec::new();
+
+        result.push(Box::new(Z390RgbDevice::new(device, "".to_string(), data_packet)));
+
+        return result;
+    }
+
+
+
+    pub fn new() -> Self
+    {
+        let device = find_hid_device(MSI_VENDOR_ID, MPG_Z390_GAMING_PRO_CARBON);
+        let data_packet = RefCell::new(DataPacket::new());
+
+
+
+
+        let mut rgb_devices = Vec::new();
+
+
+        let z390 = Z390
+        {
+            device,
+            data_packet: data_packet,
+            rgb_devices
+        };
+
+
+        //rgb_devices.push(Z390RgbDevice::new(&device, "".to_string(), &data_packet));
+
+        return z390;
+    }
+
+    //pub fn get_rgb_devices(&self) -> Vec<Box<dyn RgbDevice>>
+    //{
+    //    let mut result: Vec<Box<dyn RgbDevice>> = Vec::new();
+//
+    //    result.push(Box::new(Z390RgbDevice::new(&self.device, "".to_string(), &self.data_packet)));
+//
+    //    return result;
+    //}
+}
+
+
+
+struct Z390RgbDevice<'a>
+{
+    name                : String,
+    device              : &'a HidDevice,
+    data_packet         : &'a RefCell<DataPacket>,
+
+    color               : Color,
+    mode                : RgbMode,
+    speed               : RgbSpeed,
+}
+
+impl<'a> Z390RgbDevice<'a>
+{
+    pub fn new(device: &'a HidDevice, name: String, data_packet: &'a RefCell<DataPacket>) -> Self
+    {
+        Z390RgbDevice
+        {
+            name,
+            device,
+            data_packet,
+
+            color: Color::new(0,0,0),
+            mode: RgbMode::Static,
+            speed: RgbSpeed::Slow,
+        }
+    }
+}
+
+impl<'a> RgbDevice for Z390RgbDevice<'a>
+{
+    fn set_color(&mut self, color: Color) {
+        todo!()
+    }
+
+    fn set_mode(&mut self, mode: RgbMode) {
+        todo!()
+    }
+
+    fn set_speed(&mut self, speed: RgbSpeed) {
+        todo!()
+    }
+
+    fn get_name(&self) -> &String {
+        todo!()
+    }
+
+    fn display(&self) {
+        todo!()
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 pub struct Motherboard
 {
@@ -37,7 +192,7 @@ impl Motherboard
 
         let mut data_packet = DataPacket::new();
         data_packet.set_all(zone_data);
-        let mut buffer = data_packet.to_bytes();
+        let buffer = data_packet.to_bytes();
         //println!("{:?}", buffer);
 
         self.device.send_feature_report(&buffer);
@@ -52,7 +207,7 @@ fn find_hid_device(vendor_id: u16, product_id: u16) -> HidDevice
     {
         Ok(api) =>
             {
-                let mut devices = api.device_list();
+               // let mut devices = api.device_list();
 
                 //for d in devices
                 //{
@@ -71,7 +226,7 @@ fn find_hid_device(vendor_id: u16, product_id: u16) -> HidDevice
                 //             });
                 //}
 
-                devices = api.device_list();
+                let mut devices = api.device_list();
                 let result = devices.find(|d| d.vendor_id() == vendor_id && d.product_id() == product_id);
                 match result
                 {
@@ -94,7 +249,7 @@ fn find_hid_device(vendor_id: u16, product_id: u16) -> HidDevice
 
 
 
-
+#[allow(dead_code)]
 #[repr(u8)]
 enum MsiZone
 {
@@ -118,83 +273,6 @@ enum MsiZone
     OnBoardLed8         = 17,
     OnBoardLed9         = 18,
     OnBoardLed10        = 19
-}
-
-#[repr(u8)]
-enum MsiMode
-{
-    Disable                     = 0,
-    Static                      = 1,
-    Breathing                   = 2,
-    Flashing                    = 3,
-    DoubleFlashing              = 4,
-    Lightning                   = 5,
-    MsiMarquee                  = 6,
-    Meteor                      = 7,
-    WaterDrop                   = 8,
-    MsiRainbow                  = 9,
-    Pop                         = 10,
-    Rap                         = 11,
-    Jazz                        = 12,
-    Play                        = 13,
-    Movie                       = 14,
-    ColorRing                   = 15,
-    Planetary                   = 16,
-    DoubleMeteor                = 17,
-    Energy                      = 18,
-    Blink                       = 19,
-    Clock                       = 20,
-    ColorPulse                  = 21,
-    ColorShift                  = 22,
-    ColorWave                   = 23,
-    Marquee                     = 24,
-    Rainbow                     = 25,
-    RainbowWave                 = 26,
-    Visor                       = 27,
-    Jrainbow                    = 28,
-    RainbowFlashing             = 29,
-    RainbowDoubleFlashing       = 30,
-    Random                      = 31,
-    FanControl                  = 32,
-    Disable2                    = 33,
-    ColorRingFlashing           = 34,
-    ColorRingDoubleFlashing     = 35,
-    Stack                       = 36,
-    CorsairQue                  = 37,
-    Fire                        = 38,
-    Lava                        = 39,
-}
-
-#[repr(u8)]
-enum MsiSpeed
-{
-    Low = 0,
-    Medium = 1,
-    High = 2,
-}
-
-#[repr(u8)]
-enum MsiFanType
-{
-    Sp = 0,
-    Hd = 1,
-    Ll = 2,
-}
-
-#[repr(u8)]
-enum MsiBrightness
-{
-    Off = 0,
-    Level10 = 1,
-    Level20 = 2,
-    Level30 = 3,
-    Level40 = 4,
-    Level50 = 5,
-    Level60 = 6,
-    Level70 = 7,
-    Level80 = 8,
-    Level90 = 9,
-    Level100 = 10,
 }
 
 
@@ -228,36 +306,7 @@ impl ZoneData
 
 
 
-#[repr(C)]
-struct RainbowZoneData
-{
-    effect: u8,
-    color: Color,
-    speed_and_brightness_flags: u8,
-    color2: Color,
-    color_flags: u8,
-    padding    : u8,
-    cycle_or_led_num: u8,
-}
-
-impl RainbowZoneData
-{
-    pub fn new() -> Self
-    {
-        RainbowZoneData
-        {
-            effect: MsiMode::Static as u8,
-            color: Color::new(0,0,0),
-            speed_and_brightness_flags: 0,
-            color2: Color::new(0,0,0),
-            color_flags: 0,
-            padding: 0,
-            cycle_or_led_num: 20,
-        }
-    }
-}
-
-
+#[allow(dead_code)]
 #[repr(C)]
 struct DataPacket
 {
@@ -412,7 +461,6 @@ impl DataPacket
         DataPacket::write_zone_data(&self.on_board_led_5, ZoneIndex::OnBoardLed5, &mut buffer);
         DataPacket::write_zone_data(&self.on_board_led_6, ZoneIndex::OnBoardLed6, &mut buffer);
         DataPacket::write_zone_data(&self.on_board_led_7, ZoneIndex::OnBoardLed7, &mut buffer);
-        //println!("on board led 8: {}", self.on_board_led_8.color);
         DataPacket::write_zone_data(&self.on_board_led_8, ZoneIndex::OnBoardLed8, &mut buffer);
         DataPacket::write_zone_data(&self.on_board_led_9, ZoneIndex::OnBoardLed9, &mut buffer);
         DataPacket::write_zone_data(&self.on_board_led_10, ZoneIndex::OnBoardLed10, &mut buffer);
@@ -435,4 +483,86 @@ impl DataPacket
         buffer[zone_index as usize + 8] = zone_data.color_flags;
         buffer[zone_index as usize + 9] = zone_data.padding;
     }
+}
+
+
+
+
+
+const MSI_VENDOR_ID: u16 = 0x1462;
+const MPG_Z390_GAMING_PRO_CARBON: u16 = 0x7b17;
+
+
+
+
+#[allow(dead_code)]
+#[repr(u8)]
+enum MsiMode
+{
+    Disable                     = 0,
+    Static                      = 1,
+    Breathing                   = 2,
+    Flashing                    = 3,
+    DoubleFlashing              = 4,
+    Lightning                   = 5,
+    MsiMarquee                  = 6,
+    Meteor                      = 7,
+    WaterDrop                   = 8,
+    MsiRainbow                  = 9,
+    Pop                         = 10,
+    Rap                         = 11,
+    Jazz                        = 12,
+    Play                        = 13,
+    Movie                       = 14,
+    ColorRing                   = 15,
+    Planetary                   = 16,
+    DoubleMeteor                = 17,
+    Energy                      = 18,
+    Blink                       = 19,
+    Clock                       = 20,
+    ColorPulse                  = 21,
+    ColorShift                  = 22,
+    ColorWave                   = 23,
+    Marquee                     = 24,
+    Rainbow                     = 25,
+    RainbowWave                 = 26,
+    Visor                       = 27,
+    Jrainbow                    = 28,
+    RainbowFlashing             = 29,
+    RainbowDoubleFlashing       = 30,
+    Random                      = 31,
+    FanControl                  = 32,
+    Disable2                    = 33,
+    ColorRingFlashing           = 34,
+    ColorRingDoubleFlashing     = 35,
+    Stack                       = 36,
+    CorsairQue                  = 37,
+    Fire                        = 38,
+    Lava                        = 39,
+}
+
+#[allow(dead_code)]
+#[repr(u8)]
+enum MsiSpeed
+{
+    Low = 0,
+    Medium = 1,
+    High = 2,
+}
+
+#[allow(dead_code)]
+#[repr(u8)]
+enum MsiBrightness
+{
+    Off = 0,
+    Level10 = 1,
+    Level20 = 2,
+    Level30 = 3,
+    Level40 = 4,
+    Level50 = 5,
+    Level60 = 6,
+    Level70 = 7,
+    Level80 = 8,
+    Level90 = 9,
+    Level100 = 10,
 }

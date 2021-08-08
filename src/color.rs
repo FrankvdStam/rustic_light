@@ -1,5 +1,30 @@
 use std::fmt::Formatter;
 
+pub trait RgbDevice
+{
+    fn set_color(&mut self, color: Color);
+    fn set_mode(&mut self, mode: RgbMode);
+    fn set_speed(&mut self, speed: RgbSpeed);
+    fn get_name(&self) -> &String;
+    fn display(&self);
+}
+
+
+
+#[allow(dead_code)]
+pub enum RgbSpeed
+{
+    Slow,
+    Medium,
+    Fast
+}
+pub enum RgbMode
+{
+    Static,
+}
+
+
+
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct Color

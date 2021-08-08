@@ -1,13 +1,10 @@
-#![allow(unused)]
-
-mod gpu;
-use crate::gpu::{Gpu, RgbFusionMode, RgbFusionSpeed};
-
 mod color;
-mod motherboard;
+mod z390;
+mod rtx2080;
 
-use crate::color::Color;
-use crate::motherboard::Motherboard;
+use rtx2080::Rtx2080;
+use crate::color::{Color, RgbDevice};
+use crate::z390::{Motherboard, Z390};
 use std::thread::sleep;
 use std::time::{Duration, SystemTime};
 
@@ -20,25 +17,25 @@ const B_OFFSET: u32 = 511;
 
 
 /*
-		We can generate 3 phases of this graph:
-		(y: r/g/b)
-		255 /|\   |    |
-		   / | \  |    |
-		  /  |  \ |    |
-		0/   |   \|____|
-	    0   255  511  767 (x: potmeter position)
-		if(x < 256)
-		{
-			y = x;
-		}
-		else if (x > 255 && x < 512)
-		{
-			y = 256 - x;
-		}
-		else{
-			y = 0;
-		}
-		We offset each color to get 3 phases, thats the rgb values. */
+    We can generate 3 phases of this graph:
+    (y: r/g/b)
+    255 /|\   |    |
+       / | \  |    |
+      /  |  \ |    |
+    0/   |   \|____|
+    0   255  511  767 (x: potmeter position)
+    if(x < 256)
+    {
+        y = x;
+    }
+    else if (x > 255 && x < 512)
+    {
+        y = 256 - x;
+    }
+    else{
+        y = 0;
+    }
+    We offset each color to get 3 phases, thats the rgb values. */
 
 
 
@@ -80,21 +77,32 @@ fn main()
 {
     let start = SystemTime::now();
 
-    let gpu = Gpu::new();
-    //gpu.set_color(Color::new(0, 0, 255));
-    gpu.set_mode(RgbFusionMode::Static, RgbFusionSpeed::Fastest);
+    let z390 = Z390::new();
+    let rtx2080 = Rtx2080::new();
 
-    let motherboard = Motherboard::new();
-    //motherboard.set_color(Color::new(0, 255, 0));
+    let mut rgb_devices: Vec<Box<dyn RgbDevice>> = Vec::new();
+    rgb_devices.push(Box::new(rtx2080));
 
-    loop {
-        sleep(Duration::from_millis(100));
+
+
+
+    loop
+    {
         let position = SystemTime::now().duration_since(start).unwrap().as_millis();
         let color = get_color_from_graph(position);
         //println!("{}", color);
-        gpu.set_color(color);
-        motherboard.set_color(color);
+        //gpu.set_color(color);
         //motherboard.set_color(color);
+
+        for d in rgb_devices.iter_mut()
+        {
+            d.set_color(color);
+            d.display();
+        }
+
+
+        //motherboard.set_color(color);
+        sleep(Duration::from_millis(100));
     }
 }
 
