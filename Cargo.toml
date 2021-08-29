@@ -8,3 +8,4 @@ edition = "2018"
 [dependencies]
 hidapi = "1.2.6"
 nvapi = "0.1.3"
+windows-service = "0.4.0"
