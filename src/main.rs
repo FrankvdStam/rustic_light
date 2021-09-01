@@ -28,10 +28,12 @@ fn main() -> Result<(), windows_service::Error> {
 
 fn service_main(arguments: Vec<OsString>)
 {
-    run_service(arguments).unwrap();
+    use futures::executor::block_on;
+    block_on(run_service(arguments)).unwrap();
 }
 
-fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::Error> {
+async fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::Error> {
+
     let event_handler = move |control_event| -> ServiceControlHandlerResult {
         match control_event {
             ServiceControl::Stop =>
@@ -66,15 +68,29 @@ fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::Error> 
     };
 
     // Tell the system that the service is running now
+    status_handle.set_service_status(next_status.clone())?;
+
+    run_animation().await;
+
+    let next_status = ServiceStatus {
+        service_type: ServiceType::OWN_PROCESS,
+        current_state: ServiceState::Stopped,
+        controls_accepted: ServiceControlAccept::empty(),
+        exit_code: ServiceExitCode::Win32(0),
+        checkpoint: 0,
+        wait_hint: Duration::default(),
+        process_id: None
+    };
     status_handle.set_service_status(next_status)?;
 
+    #[allow(unreachable_code)]
+    Ok(())
+}
 
 
 
-
-
-
-
+async fn run_animation()
+{
     let start = SystemTime::now();
 
     let mut rgb_devices: Vec<Box<dyn RgbDevice>> = z390::get_z390_rgb_devices();
@@ -82,11 +98,8 @@ fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::Error> 
 
     loop
     {
-
         let millis = SystemTime::now().duration_since(start).unwrap().as_millis();
-
         animation::color_spectrum(&mut rgb_devices, millis);
-
         for d in rgb_devices.iter_mut()
         {
             d.display();
@@ -94,8 +107,4 @@ fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::Error> 
 
         sleep(Duration::from_millis(100));
     }
-
-    #[allow(unreachable_code)]
-    Ok(())
 }
-

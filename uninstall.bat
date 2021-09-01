@@ -1,2 +1,2 @@
-sc.exe delete RusticLight 
-pause
+net stop RusticLight
+sc delete RusticLight

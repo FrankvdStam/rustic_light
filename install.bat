@@ -1,5 +1,2 @@
-net stop RusticLight
-sc.exe delete RusticLight 
-sc.exe create RusticLight binpath=%~dp0target\debug\rustic_light.exe type=own start=auto
+sc create RusticLight binpath=%~dp0target\release\rustic_light.exe type=own
 net start RusticLight
-pause
