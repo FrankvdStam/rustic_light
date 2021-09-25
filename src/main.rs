@@ -28,16 +28,19 @@ fn main() -> Result<(), windows_service::Error> {
 
 fn service_main(arguments: Vec<OsString>)
 {
-    use futures::executor::block_on;
-    block_on(run_service(arguments)).unwrap();
+    run_service(arguments).unwrap();
 }
 
-async fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::Error> {
+static mut RUNNING: bool = true;
+
+
+fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::Error> {
 
     let event_handler = move |control_event| -> ServiceControlHandlerResult {
         match control_event {
             ServiceControl::Stop =>
             {
+                unsafe { RUNNING = false; }
                 // Handle stop event and return control back to the system.
                 ServiceControlHandlerResult::NoError
             }
@@ -70,7 +73,7 @@ async fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::E
     // Tell the system that the service is running now
     status_handle.set_service_status(next_status.clone())?;
 
-    run_animation().await;
+    run_animation();
 
     let next_status = ServiceStatus {
         service_type: ServiceType::OWN_PROCESS,
@@ -88,8 +91,7 @@ async fn run_service(_arguments: Vec<OsString>) -> Result<(), windows_service::E
 }
 
 
-
-async fn run_animation()
+fn run_animation()
 {
     let start = SystemTime::now();
 
@@ -106,5 +108,13 @@ async fn run_animation()
         }
 
         sleep(Duration::from_millis(100));
+
+        unsafe
+        {
+            if !RUNNING
+            {
+                return;
+            }
+        }
     }
 }
