@@ -1,6 +1,8 @@
 use cooler_master_sdk::CoolerMasterDevice;
 use cooler_master_sdk::ffi::DeviceIndex;
 use crate::color::{Color, RgbDevice, RgbMode, RgbSpeed, RgbBrightness};
+use std::thread::sleep;
+use std::time::Duration;
 
 pub struct Sk621
 {
@@ -13,12 +15,27 @@ impl Sk621
 {
     pub fn new() -> Self
     {
-        Sk621
+
+        let mut sk621 = Sk621
         {
             name: "sk621".to_string(),
             color: Color::new(0, 0, 0),
             device: CoolerMasterDevice::new(DeviceIndex::SK621),
+        };
+
+        //Constructing the CoolerMasterDevice will attempt to claim software control over the keyboard
+        //However, it might fail - especially during startup of this service it might not be initialized yet
+        while
+            match sk621.device.set_led_control(true)
+            {
+                Ok(_) => false,
+                Err(_) => true
+            }
+        {
+            sleep(Duration::from_secs(1));
         }
+
+        return sk621;
     }
 }
 

@@ -65,7 +65,6 @@ pub fn color_spectrum(rgb_devices: &mut Vec<Box<dyn RgbDevice>>, mut millis: u12
 {
     //scale
     millis = millis / 100;
-
     let color = get_color_from_graph(millis);
 
     //write data to all devices before displaying

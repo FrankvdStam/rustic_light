@@ -19,49 +19,43 @@ use std::thread::sleep;
 use std::time::{Duration, SystemTime};
 use windows_service::service_control_handler::ServiceControlHandlerResult;
 use windows_service::service::{ServiceControl, ServiceStatus, ServiceType, ServiceState, ServiceControlAccept, ServiceExitCode};
-use cooler_master_sdk::CoolerMasterDevice;
-use cooler_master_sdk::ffi::DeviceIndex;
+//use cooler_master_sdk::CoolerMasterDevice;
+//use cooler_master_sdk::ffi::DeviceIndex;
 
 
 //Debug mode
 #[allow(dead_code)]
-fn main2()
+fn main()
 {
-    let mut device = CoolerMasterDevice::new(DeviceIndex::SK621);
-    println!("version from device: {}", device.sdk_version);
-
-    device.set_full_color(0,0,0);
-
-
-
-    for row in 0..8
-    {
-        for column in 0..24
-        {
-            println!("{} {}", row, column);
-
-            device.color_matrix.key_color[row][column].r = 255;
-            device.color_matrix.key_color[row][column].g = 255;
-            device.color_matrix.key_color[row][column].b = 255;
-
-            device.update_colors_from_matrix().unwrap();
-
-            sleep(Duration::from_millis(100));
-        }
-    }
-
-
-
-
-
-
+    //let mut device = CoolerMasterDevice::new(DeviceIndex::SK621);
+    //println!("version from device: {}", device.sdk_version);
+//
+    //device.set_full_color(0,0,0);
+//
+//
+//
+    //for row in 0..8
+    //{
+    //    for column in 0..24
+    //    {
+    //        println!("{} {}", row, column);
+//
+    //        device.color_matrix.key_color[row][column].r = 255;
+    //        device.color_matrix.key_color[row][column].g = 255;
+    //        device.color_matrix.key_color[row][column].b = 255;
+//
+    //        device.update_colors_from_matrix().unwrap();
+//
+    //        sleep(Duration::from_millis(100));
+    //    }
+    //}
 
     run_animation();
 }
 
 //Service mode
 #[allow(dead_code)] //disable warnings when running "debug" mode
-fn main() -> Result<(), windows_service::Error> {
+fn main2() -> Result<(), windows_service::Error> {
     // Register generated `ffi_service_main` with the system and start the service, blocking
     // this thread until the service is stopped.
     service_dispatcher::start("RusticLight", ffi_service_main)?;
@@ -150,7 +144,7 @@ fn run_animation()
             d.display();
         }
 
-        sleep(Duration::from_millis(100));
+        sleep(Duration::from_millis(10));
 
         unsafe
         {
